@@ -5,8 +5,8 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,11 +22,10 @@ import java.io.IOException;
 import retrofit.Callback;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
-import retrofit.client.OkClient;
 import retrofit.client.Response;
 
 
-public class MainActivity extends ActionBarActivity implements Callback<Void> {
+public class MainActivity extends ActionBarActivity implements Callback<DeviceInfo> {
 
     public static final String EXTRA_MESSAGE = "message";
     public static final String PROPERTY_REG_ID = "registration_id";
@@ -214,7 +213,10 @@ public class MainActivity extends ActionBarActivity implements Callback<Void> {
 
     private void sendRegistrationIdToBackend() {
         // Your implementation here.
-        pushServer.postDevice(regid,"android",this);
+        pushServer.postDevice(regid,"android",
+                new DeviceUuidFactory(this).getDeviceUuid().toString(),
+                getPackageName(),
+                this);
     }
 
     private void storeRegistrationId(Context context, String regId) {
@@ -228,7 +230,7 @@ public class MainActivity extends ActionBarActivity implements Callback<Void> {
     }
 
     @Override
-    public void success(Void obj, Response response) {
+    public void success(DeviceInfo obj, Response response) {
         mProgressBar.setVisibility(View.GONE);
         mDisplay.setText("Register to PushServer successful !!!");
     }
