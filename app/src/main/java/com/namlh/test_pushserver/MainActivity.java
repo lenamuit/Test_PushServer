@@ -77,6 +77,7 @@ public class MainActivity extends ActionBarActivity implements Callback<DeviceIn
 
     private void initWebserver(){
         RestAdapter restAdapter = new RestAdapter.Builder()
+//                .setEndpoint("http://192.168.1.107:3000/")
                 .setEndpoint("http://pushserver.namlh.com/")
                 .setLogLevel(RestAdapter.LogLevel.FULL)
                 .setRequestInterceptor(new RequestInterceptor() {
@@ -272,7 +273,8 @@ public class MainActivity extends ActionBarActivity implements Callback<DeviceIn
     public void failure(RetrofitError error) {
         mDisplay.setText("Register to PushServer failed !!!\n");
         try {
-            mDisplay.append(stream2String(error.getResponse().getBody().in()));
+            if (error.getResponse() !=null && error.getResponse().getBody() !=null)
+                mDisplay.append(stream2String(error.getResponse().getBody().in()));
         } catch (IOException e) {
             e.printStackTrace();
         }
