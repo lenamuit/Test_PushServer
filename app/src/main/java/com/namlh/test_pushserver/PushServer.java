@@ -16,5 +16,9 @@ public interface PushServer {
                     @Field("os")String os,
                     @Field("uuid") String uuid,
                     @Field("app_id") String appId,
+                    @Field("app_version") String appVersion,
+                    @Field("manufacturer") String manufacturer,
+                    @Field("model") String model,
+                    @Field("os_version") String osVersion,
                     Callback<DeviceInfo> callback);
 }

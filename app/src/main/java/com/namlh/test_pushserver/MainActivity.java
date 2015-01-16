@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -17,9 +18,13 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import retrofit.Callback;
+import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
@@ -72,8 +77,14 @@ public class MainActivity extends ActionBarActivity implements Callback<DeviceIn
 
     private void initWebserver(){
         RestAdapter restAdapter = new RestAdapter.Builder()
-                .setEndpoint("http://128.199.183.217")
+                .setEndpoint("http://pushserver.namlh.com/")
                 .setLogLevel(RestAdapter.LogLevel.FULL)
+                .setRequestInterceptor(new RequestInterceptor() {
+                    @Override
+                    public void intercept(RequestFacade request) {
+                        request.addHeader("X-Auth-Token","54450690f368a2517f98def633388132");
+                    }
+                })
                 .build();
         pushServer = restAdapter.create(PushServer.class);
     }
@@ -212,10 +223,31 @@ public class MainActivity extends ActionBarActivity implements Callback<DeviceIn
     }
 
     private void sendRegistrationIdToBackend() {
+        PackageInfo pInfo = null;
+        String version = "";
+        try {
+            pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+            version = pInfo.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+
+
+        String os = "android";
+        String uuid = new DeviceUuidFactory(this).getDeviceUuid().toString();
+        String app_id = getPackageName();
+        String manufacturer = Build.MANUFACTURER;
+        String model = Build.MODEL;
+        String osVersion =os + " " + Build.VERSION.SDK_INT;
         // Your implementation here.
-        pushServer.postDevice(regid,"android",
-                new DeviceUuidFactory(this).getDeviceUuid().toString(),
-                getPackageName(),
+        pushServer.postDevice(regid,
+                os,
+                uuid,
+                app_id,
+                version,
+                manufacturer,
+                model,
+                osVersion,
                 this);
     }
 
@@ -232,12 +264,32 @@ public class MainActivity extends ActionBarActivity implements Callback<DeviceIn
     @Override
     public void success(DeviceInfo obj, Response response) {
         mProgressBar.setVisibility(View.GONE);
-        mDisplay.setText("Register to PushServer successful !!!");
+        mDisplay.setText("Register to PushServer successful !!!\n"+
+            obj.toString());
     }
 
     @Override
     public void failure(RetrofitError error) {
         mDisplay.setText("Register to PushServer failed !!!\n");
-        mDisplay.append(error.getMessage());
+        try {
+            mDisplay.append(stream2String(error.getResponse().getBody().in()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private String stream2String(InputStream is){
+        BufferedReader r = new BufferedReader(new InputStreamReader(is));
+        StringBuilder sb = new StringBuilder();
+        String line;
+        try {
+            while ((line = r.readLine()) !=null){
+                sb.append(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return sb.toString();
     }
 }
